@@ -89,55 +89,39 @@ const char *OUTPUT_FILE = "output.txt";
 
 const int nax = 1000001;
 
-typedef ld T;
+// OBJECT REPRESENTING A POINT (OR VECTOR)
 struct pt {
-    T x, y;
+    ld x, y;
     pt() { x = y = -1; }
-    pt(T _x, T _y) { x = _x, y = _y; }
+    pt(ld _x, ld _y) { x = _x, y = _y; }
     pt operator+(pt p) { return {x + p.x, y + p.y}; }
     pt operator-(pt p) { return {x - p.x, y - p.y}; }
-    pt operator*(T d) { return {x * d, y * d}; }
-    pt operator/(T d) { return {x / d, y / d}; }
+    pt operator*(ld d) { return {x * d, y * d}; }
+    pt operator/(ld d) { return {x / d, y / d}; }
+    bool operator==(pt b) { return x == b.x && y == b.y; }
+    bool operator!=(pt b) { return !(*this == b); }
     friend ostream &operator<<(ostream &out, pt &p) {
         return out << " (" << p.x << ", " << p.y << ") ";
     }
 };
 
-bool operator==(pt a, pt b) { return a.x == b.x && a.y == b.y; }
-bool operator!=(pt a, pt b) { return !(a == b); }
-
+// VECTOR-RELATED OPERATIONS
 pt perp(pt p) { return {-p.y, p.x}; }
+ld dot(pt p, pt w) { return p.x * w.x + p.y * w.y; }
+ld cross(pt v, pt w) { return v.x * w.y - v.y * w.x; }
+ld orient(pt a, pt b, pt c) { return cross(b - a, c - a); }
 
-T cross(pt v, pt w) {
-    return v.x * w.y - v.y * w.x;
-}
-
-T orient(pt a, pt b, pt c) {
-    return cross(b - a, c - a);
-}
-
-bool above(pt a, pt p) {
-    return p.y >= a.y;
-}
-
-bool crossesRay(pt a, pt p, pt q) {
-    return (above(a, q) - above(a, p)) * orient(a, p, q) > 0;
-}
-
-T dot(pt p, pt w) { return p.x * w.x + p.y * w.y; }
-
-bool inDisk(pt a, pt b, pt c) {
-    return dot(a - c, b - c) <= 0;
-}
-
-bool onSegment(pt a, pt b, pt c) {
-    return orient(a, b, c) == 0 && inDisk(a, b, c);
-}
-
-T sq(pt p) { return p.x * p.x + p.y * p.y; }
+// FIND MAGNITUDE OF VECTOR P
+ld sq(pt p) { return p.x * p.x + p.y * p.y; }
 ld abs(pt p) { return sqrt(sq(p)); }
 
+// CHECK WHETHER A POINT IS INSIDE POLYGON, OUTSIDE POLYGON, OR ON THE BOUNDARY OF THE POLYGON
 const int ON_SEGMENT = -1, INSIDE = 1, OUTSIDE = 0;
+
+bool above(pt a, pt p) { return p.y >= a.y; }
+bool crossesRay(pt a, pt p, pt q) { return (above(a, q) - above(a, p)) * orient(a, p, q) > 0; }
+bool inDisk(pt a, pt b, pt c) { return dot(a - c, b - c) <= 0; }
+bool onSegment(pt a, pt b, pt c) { return orient(a, b, c) == 0 && inDisk(a, b, c); }
 
 int inPolygon(vector<pt> &p, pt a) {
     int cnt = 0;
@@ -148,31 +132,21 @@ int inPolygon(vector<pt> &p, pt a) {
     return cnt % 2;
 }
 
+// OBJECT REPRESENTING A LINE IN FORM AX + BY = C
 struct line {
     pt v;
-    T c;
-    line(pt _v, T _c) : v(_v), c(_c) {}
-    line(T a, T b, T _c) : v({b, -a}), c(_c) {}
+    ld c;
+    line(pt _v, ld _c) : v(_v), c(_c) {}
+    line(ld a, ld b, ld _c) : v({b, -a}), c(_c) {}
     line(pt p, pt q) : v(q - p), c(cross(v, p)) {}
 
-    T side(pt p) {
-        return cross(v, p) - c;
-    }
-
-    double dist(pt p) {
-        return abs(side(p)) / abs(v);
-    }
-
-    bool cmpProj(pt p, pt q) {
-        return dot(v, p) < dot(v, q);
-    }
-
-    pt proj(pt p) {
-        return p - perp(v) * 2 * side(p) / sq(v);
-    }
+    ld side(pt p) { return cross(v, p) - c; }
+    double dist(pt p) { return abs(side(p)) / abs(v); }
+    bool cmpProj(pt p, pt q) { return dot(v, p) < dot(v, q); }
 };
 
-T segPoint(pt a, pt b, pt p) {
+// DETERMINE DISTANCE BETWEEN POINT P AND THE LINE CREATED BY POINT a AND POINT B
+ld segPoint(pt a, pt b, pt p) {
     if (a != b) {
         line l(a, b);
         if (l.cmpProj(a, p) && l.cmpProj(p, b)) return l.dist(p);
@@ -205,9 +179,9 @@ void prayGod() {
             } else {
                 cout << "Miss! ";
             }
-            T ret = iinf;
+            ld ret = iinf;
             for (int j = 0; j < n; j++) {
-                T temp = segPoint(points[j], points[(j + 1) % n], p);
+                ld temp = segPoint(points[j], points[(j + 1) % n], p);
                 ret = min(ret, temp);
             }
             printDecimal(9) << ret << '\n';
